@@ -737,7 +737,7 @@ namespace Unity.Netcode
                     NetworkObject.AddSceneObject(sceneObject, InternalBuffer, m_NetworkManager);
                 }
                 // Now deserialize the despawned in-scene placed NetworkObjects list (if any)
-                DeserializeDespawnedInScenePlacedNetworkObjects();
+                DeserializeDespawnedAndDestroyedInScenePlacedNetworkObjects();
             }
             finally
             {
@@ -868,12 +868,29 @@ namespace Unity.Netcode
         /// For synchronizing any despawned in-scene placed NetworkObjects that were
         /// despawned by the server during synchronization or scene loading
         /// </summary>
-        private void DeserializeDespawnedInScenePlacedNetworkObjects()
+        private void DeserializeDespawnedAndDestroyedInScenePlacedNetworkObjects()
         {
+            // Build in-scene NetworkObjects cache
+            var sceneCache = new Dictionary<int, Dictionary<uint, NetworkObject>>();
+
+            foreach (var scene in m_NetworkManager.SceneManager.ScenesLoaded.Values)
+            {
+                var inSceneNetworkObjects = UnityEngine.Object
+                    .FindObjectsByType<NetworkObject>(UnityEngine.FindObjectsInactive.Include, UnityEngine.FindObjectsSortMode.None)
+                    .Where(networkObject => networkObject.GetSceneOriginHandle() == scene.handle && networkObject.IsSceneObject != false)
+                    .ToList();
+
+                sceneCache[scene.handle] = new Dictionary<uint, NetworkObject>();
+
+                foreach (var inSceneNetworkObject in inSceneNetworkObjects)
+                {
+                    sceneCache[scene.handle][inSceneNetworkObject.GlobalObjectIdHash] = inSceneNetworkObject;
+                }
+            }
+
             // Process all de-spawned in-scene NetworkObjects for this network session
             m_DespawnedInSceneObjects.Clear();
             InternalBuffer.ReadValueSafe(out int despawnedObjectsCount);
-            var sceneCache = new Dictionary<int, Dictionary<uint, NetworkObject>>();
 
             for (int i = 0; i < despawnedObjectsCount; i++)
             {
@@ -984,7 +1001,7 @@ namespace Unity.Netcode
                 }
 
                 // Now deserialize the despawned in-scene placed NetworkObjects list (if any)
-                DeserializeDespawnedInScenePlacedNetworkObjects();
+                DeserializeDespawnedAndDestroyedInScenePlacedNetworkObjects();
 
             }
             finally

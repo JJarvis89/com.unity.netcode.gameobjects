@@ -9,7 +9,7 @@ namespace Unity.Netcode
     /// <summary>
     ///  The default SceneManagerHandler that interfaces between the SceneManager and NetworkSceneManager
     /// </summary>
-    internal class DefaultSceneManagerHandler : ISceneManagerHandler
+    public class DefaultSceneManagerHandler : ISceneManagerHandler
     {
         private Scene m_InvalidScene = new Scene();
 
@@ -21,14 +21,14 @@ namespace Unity.Netcode
 
         internal Dictionary<string, Dictionary<int, SceneEntry>> SceneNameToSceneHandles = new Dictionary<string, Dictionary<int, SceneEntry>>();
 
-        public AsyncOperation LoadSceneAsync(string sceneName, LoadSceneMode loadSceneMode, SceneEventProgress sceneEventProgress)
+        public virtual AsyncOperation LoadSceneAsync(string sceneName, LoadSceneMode loadSceneMode, SceneEventProgress sceneEventProgress)
         {
             var operation = SceneManager.LoadSceneAsync(sceneName, loadSceneMode);
             sceneEventProgress.SetAsyncOperation(operation);
             return operation;
         }
 
-        public AsyncOperation UnloadSceneAsync(Scene scene, SceneEventProgress sceneEventProgress)
+        public virtual AsyncOperation UnloadSceneAsync(Scene scene, SceneEventProgress sceneEventProgress)
         {
             var operation = SceneManager.UnloadSceneAsync(scene);
             sceneEventProgress.SetAsyncOperation(operation);

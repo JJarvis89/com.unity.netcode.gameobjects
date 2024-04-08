@@ -91,6 +91,7 @@ namespace Unity.Netcode.Editor
 #endif
             if (!isSceneInBuildSettings && networkManager != null)
             {
+                /*
                 if (networkManager.NetworkConfig != null && networkManager.NetworkConfig.EnableSceneManagement)
                 {
                     if (EditorUtility.DisplayDialog("Add Scene to Scenes in Build", $"The current scene was not found in the scenes" +
@@ -101,7 +102,7 @@ namespace Unity.Netcode.Editor
                         scenesList.Add(new EditorBuildSettingsScene(activeScene.path, true));
                         EditorBuildSettings.scenes = scenesList.ToArray();
                     }
-                }
+                }*/
             }
         }
 
