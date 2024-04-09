@@ -1836,6 +1836,10 @@ namespace Unity.Netcode
             {
                 sceneEventData.ActiveSceneHash = BuildIndexToHash[activeScene.buildIndex];
             }
+            else if(ExternalSceneNameToHash.ContainsKey(activeScene.name))
+            {
+                sceneEventData.ActiveSceneHash = ExternalSceneNameToHash[activeScene.name];
+            }
 
             // Organize how (and when) we serialize our NetworkObjects
             for (int i = 0; i < SceneManager.sceneCount; i++)
@@ -1854,6 +1858,8 @@ namespace Unity.Netcode
                     continue;
                 }
 
+                var sceneHash = SceneHashFromNameOrPath(scene.name);
+
                 // This would depend upon whether we are additive or not
                 // If we are the base scene, then we set the root scene index;
                 if (activeScene == scene)
@@ -1862,14 +1868,14 @@ namespace Unity.Netcode
                     {
                         continue;
                     }
-                    sceneEventData.SceneHash = SceneHashFromNameOrPath(scene.path);
+                    sceneEventData.SceneHash = sceneHash;
                     sceneEventData.SceneHandle = scene.handle;
                 }
                 else if (!ValidateSceneBeforeLoading(scene.buildIndex, scene.name, LoadSceneMode.Additive))
                 {
                     continue;
                 }
-                sceneEventData.AddSceneToSynchronize(SceneHashFromNameOrPath(scene.path), scene.handle);
+                sceneEventData.AddSceneToSynchronize(sceneHash, scene.handle);
             }
 
             sceneEventData.AddSpawnedNetworkObjects();
