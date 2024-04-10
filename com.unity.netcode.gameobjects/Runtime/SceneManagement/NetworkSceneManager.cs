@@ -872,6 +872,15 @@ namespace Unity.Netcode
                 SendSceneEventData(sceneEvent.SceneEventId, NetworkManager.ConnectedClientsIds.Where(c => c != NetworkManager.ServerClientId).ToArray());
                 EndSceneEvent(sceneEvent.SceneEventId);
             }
+            else if(ExternalSceneNameToHash.ContainsKey(next.name))
+            {
+                // Notify clients of the change in active scene
+                var sceneEvent = BeginSceneEvent();
+                sceneEvent.SceneEventType = SceneEventType.ActiveSceneChanged;
+                sceneEvent.ActiveSceneHash = ExternalSceneNameToHash[next.name];
+                SendSceneEventData(sceneEvent.SceneEventId, NetworkManager.ConnectedClientsIds.Where(c => c != NetworkManager.ServerClientId).ToArray());
+                EndSceneEvent(sceneEvent.SceneEventId);
+            }
         }
 
         /// <summary>
@@ -2105,7 +2114,16 @@ namespace Unity.Netcode
             {
                 case SceneEventType.ActiveSceneChanged:
                     {
-                        if (HashToBuildIndex.ContainsKey(sceneEventData.ActiveSceneHash))
+                        if (HashToExternalScenePath.ContainsKey(sceneEventData.ActiveSceneHash))
+                        {
+                            var sceneName = SceneNameFromHash(sceneEventData.ActiveSceneHash);
+                            var scene = SceneManager.GetSceneByName(sceneName);
+                            if (scene.isLoaded)
+                            {
+                                SceneManager.SetActiveScene(scene);
+                            }
+                        }
+                        else if (HashToBuildIndex.ContainsKey(sceneEventData.ActiveSceneHash))
                         {
                             var scene = SceneManager.GetSceneByBuildIndex(HashToBuildIndex[sceneEventData.ActiveSceneHash]);
                             if (scene.isLoaded)
@@ -2142,7 +2160,16 @@ namespace Unity.Netcode
                             PopulateScenePlacedObjects(DontDestroyOnLoadScene, false);
 
                             // If needed, set the currently active scene
-                            if (HashToBuildIndex.ContainsKey(sceneEventData.ActiveSceneHash))
+                            if (HashToExternalScenePath.ContainsKey(sceneEventData.ActiveSceneHash))
+                            {
+                                var targetActiveSceneName = SceneNameFromHash(sceneEventData.ActiveSceneHash);
+                                var targetActiveScene = SceneManager.GetSceneByName(targetActiveSceneName);
+                                if (targetActiveScene.isLoaded && targetActiveScene.handle != SceneManager.GetActiveScene().handle)
+                                {
+                                    SceneManager.SetActiveScene(targetActiveScene);
+                                }
+                            }
+                            else if (HashToBuildIndex.ContainsKey(sceneEventData.ActiveSceneHash))
                             {
                                 var targetActiveScene = SceneManager.GetSceneByBuildIndex(HashToBuildIndex[sceneEventData.ActiveSceneHash]);
                                 if (targetActiveScene.isLoaded && targetActiveScene.handle != SceneManager.GetActiveScene().handle)
